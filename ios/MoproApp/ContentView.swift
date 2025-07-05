@@ -35,7 +35,53 @@ struct ContentView: View {
                 }
             }
             .disabled(isRunningProof)
+            
+            Button("Fetch Challenge") {
+                Task {
+                    do {
+                        let info = try await RandomnessProvider.fetchLoEChallenge()
+                        log = """
+                        ✅ Challenge fetched
+                        • Source : \(info.source)
+                        • Round  : \(info.round)
+                        • Time   : \(info.fetchedAt)
+                        • Challenge (hex): \(info.challenge32Hex)
+                        """
+                    } catch {
+                        log = "❌ Failed to fetch challenge: \(error)"
+                    }
+                }
+            }
+            .disabled(isRunningProof)
 
+            Button("Run Noir") {
+                Task {
+                    guard let circuitPath = Bundle.main.path(forResource: "ecdsa", ofType: "json") else {
+                        log = "❌ ecdsa circuit not found in bundle."
+                        return
+                    }
+
+                    isRunningProof = true
+                    proofElapsed = 0
+                    startTimer()
+
+                    do {
+                        let proof = try generateNoirProof(circuitPath: circuitPath, srsPath: nil, inputs: ["1", "2"])
+                        let verifies = try verifyNoirProof(circuitPath: circuitPath, proof: proof)
+                        
+                        assert(verifies)
+
+                        log = "✅ Noir proof generated and verified (\(proof.count) bytes)"
+                    } catch {
+                        log = "❌ Noir proof error: \(error.localizedDescription)"
+                    }
+
+                    stopTimer()
+                    isRunningProof = false
+                }
+            }
+            .disabled(isRunningProof)
+            
             Button("Run App Attest") {
                 Task {
                     await runAppAttestTest()

@@ -33,23 +33,22 @@ pub enum Risc0Error {
     SerializeError(String),
 }
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Record)]
 pub struct AssertionProofOutput {
     pub signature_data: SignatureData,
     pub proof: Risc0ProofOutput
 }
-
-#[derive(uniffi::Object)]
+#[derive(uniffi::Record, Clone)]
 pub struct Risc0ProofOutput {
     pub receipt: Vec<u8>,
 }
 
-#[derive(uniffi::Object)]
+#[derive(uniffi::Record, Clone)]
 pub struct SignatureData {
-    pub signature_r: [u8; 32],
-    pub signature_s: [u8; 32],
-    pub public_key_x: [u8; 32],
-    pub public_key_y: [u8; 32],
+    pub signature_r: Vec<u8>,
+    pub signature_s: Vec<u8>,
+    pub public_key_x: Vec<u8>,
+    pub public_key_y: Vec<u8>,
 }
 
 #[uniffi::export]
@@ -77,7 +76,7 @@ pub fn prove_attestation() -> Result<Risc0ProofOutput, Risc0Error> {
             &ProverOpts::fast()
         ).map_err(|e| Risc0Error::ProveError(e.to_string()))?
         .receipt;
-    
+
     let receipt_bytes = bincode::serialize(&receipt)
         .map_err(|e| Risc0Error::SerializeError(format!("Failed to serialize receipt: {}", e)))?;
 
@@ -115,7 +114,7 @@ pub fn prove_assertion() -> Result<AssertionProofOutput, Risc0Error> {
 
     let receipt_bytes = bincode::serialize(&receipt)
         .map_err(|e| Risc0Error::SerializeError(format!("Failed to serialize receipt: {}", e)))?;
-    
+
     // Return the signature data and receipt as output.
     Ok(AssertionProofOutput {
         signature_data,

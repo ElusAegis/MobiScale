@@ -7,21 +7,49 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2A5992392CC77A7E00135402 /* MoproBindings.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A5992372CC77A7E00135402 /* MoproBindings.xcframework */; };
-		2A59923A2CC77A7E00135402 /* mopro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A5992362CC77A7E00135402 /* mopro.swift */; };
 		60BBD7402E19A0C100196FF4 /* ecdsa.json in Resources */ = {isa = PBXBuildFile; fileRef = 60BBD73F2E19A0C100196FF4 /* ecdsa.json */; };
+		60BBD7732E19C90700196FF4 /* MoproBindings.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */; };
+		60BBD7742E19C90700196FF4 /* MoproBindings.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		60BBD7762E19C90F00196FF4 /* mopro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60BBD7702E19C8FB00196FF4 /* mopro.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		60BBD7752E19C90700196FF4 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				60BBD7742E19C90700196FF4 /* MoproBindings.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		2A5991EC2CC7722900135402 /* MoproApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoproApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		2A5992362CC77A7E00135402 /* mopro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mopro.swift; sourceTree = "<group>"; };
-		2A5992372CC77A7E00135402 /* MoproBindings.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MoproBindings.xcframework; sourceTree = "<group>"; };
 		60BBD73F2E19A0C100196FF4 /* ecdsa.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = ecdsa.json; path = ../ecdsa/target/ecdsa.json; sourceTree = SOURCE_ROOT; };
+		60BBD7702E19C8FB00196FF4 /* mopro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mopro.swift; sourceTree = "<group>"; };
+		60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MoproBindings.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		60BBD7692E19C45300196FF4 /* Exceptions for "MoproApp" folder in "MoproApp" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Assets.xcassets,
+			);
+			target = 2A5991EB2CC7722900135402 /* MoproApp */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		2A5991EE2CC7722900135402 /* MoproApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				60BBD7692E19C45300196FF4 /* Exceptions for "MoproApp" folder in "MoproApp" target */,
+			);
 			path = MoproApp;
 			sourceTree = "<group>";
 		};
@@ -32,7 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2A5992392CC77A7E00135402 /* MoproBindings.xcframework in Frameworks */,
+				60BBD7732E19C90700196FF4 /* MoproBindings.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -44,8 +72,8 @@
 			children = (
 				2A5991EE2CC7722900135402 /* MoproApp */,
 				2A5991ED2CC7722900135402 /* Products */,
-				2A5992382CC77A7E00135402 /* MoproiOSBindings */,
 				60BBD73F2E19A0C100196FF4 /* ecdsa.json */,
+				60BBD76F2E19C8FB00196FF4 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -57,11 +85,19 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		2A5992382CC77A7E00135402 /* MoproiOSBindings */ = {
+		60BBD76F2E19C8FB00196FF4 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				2A5992362CC77A7E00135402 /* mopro.swift */,
-				2A5992372CC77A7E00135402 /* MoproBindings.xcframework */,
+				60BBD7722E19C8FB00196FF4 /* MoproiOSBindings */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		60BBD7722E19C8FB00196FF4 /* MoproiOSBindings */ = {
+			isa = PBXGroup;
+			children = (
+				60BBD7702E19C8FB00196FF4 /* mopro.swift */,
+				60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */,
 			);
 			path = MoproiOSBindings;
 			sourceTree = "<group>";
@@ -76,6 +112,7 @@
 				2A5991E82CC7722900135402 /* Sources */,
 				2A5991E92CC7722900135402 /* Frameworks */,
 				2A5991EA2CC7722900135402 /* Resources */,
+				60BBD7752E19C90700196FF4 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -141,7 +178,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2A59923A2CC77A7E00135402 /* mopro.swift in Sources */,
+				60BBD7762E19C90F00196FF4 /* mopro.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -277,7 +314,7 @@
 				CODE_SIGN_ENTITLEMENTS = MoproApp/MoproApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MoproApp/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = LMRM26A744;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -311,7 +348,7 @@
 				CODE_SIGN_ENTITLEMENTS = MoproApp/MoproApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "\"MoproApp/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = LMRM26A744;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -1,0 +1,23 @@
+[package]
+name = "appattest-rs"
+license = "MIT"
+version = { workspace = true }
+edition = { workspace = true }
+repository = "https://github.com/TheDhejavu/appattest-rs"
+readme = "README.md"
+description = "A Rust module for validating Apple App Attestations and Assertions"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+byteorder = "1.4"
+sha2 = "0.10.8"
+serde = { version = "1.0", features = ["derive"] }
+base64 = "0.22.1"
+p256 = "0.13.2"
+ciborium = "0.2.2" 
+x509-parser = { version = "0.17.0", default-features = false }   # already in your file
+
+[build-dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["blocking"] }
+base64 = "0.22.1"

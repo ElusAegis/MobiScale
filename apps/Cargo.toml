@@ -3,16 +3,16 @@ name = "apps"
 version = { workspace = true }
 edition = { workspace = true }
 
+[lib]
+name = "mopro_bindings"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+
 [dependencies]
-alloy = { workspace = true }
-alloy-primitives = { workspace = true }
-alloy-sol-types = { workspace = true }
-anyhow = { workspace = true }
-clap = { version = "4.0", features = ["derive", "env"] }
+mopro-ffi = { version = "0.2.0", no-default-features = true }
+uniffi = { version = "0.29" }
 env_logger = { version = "0.10" }
-log = { workspace = true }
 methods = { workspace = true }
-risc0-ethereum-contracts = { workspace = true }
-risc0-zkvm = { workspace = true, default-features = true }
-tokio = { version = "1.35", features = ["full"] }
-url = { workspace = true }
+risc0-zkvm = { workspace = true, default-features = false, features = ["prove", "metal", "unstable"] }
+bincode = "1.3"
+thiserror = "2.0.12"

@@ -42,5 +42,5 @@ Options:
           Print version
 ```
 
-[publisher]: ./src/bin/publisher.rs
+[publisher]: src/bin/attestation.rs
 [Bonsai]: https://dev.bonsai.xyz/

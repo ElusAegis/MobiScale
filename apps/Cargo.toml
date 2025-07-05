@@ -11,7 +11,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 [dependencies]
 mopro-ffi = { git = "https://github.com/zkmopro/mopro.git", no-default-features = true, features = ["noir"] }
 uniffi = { version = "0.29" }
-env_logger = { version = "0.10" }
+env_logger = { version = "0.11.8" }
 methods = { workspace = true }
 risc0-zkvm = { workspace = true, default-features = false, features = ["prove", "metal", "unstable"] }
 bincode = "1.3"

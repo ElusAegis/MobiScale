@@ -9,12 +9,14 @@
 /* Begin PBXBuildFile section */
 		2A5992392CC77A7E00135402 /* MoproBindings.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A5992372CC77A7E00135402 /* MoproBindings.xcframework */; };
 		2A59923A2CC77A7E00135402 /* mopro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A5992362CC77A7E00135402 /* mopro.swift */; };
+		60BBD73E2E19998200196FF4 /* ecdsa.json in Resources */ = {isa = PBXBuildFile; fileRef = 60BBD73D2E19998200196FF4 /* ecdsa.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2A5991EC2CC7722900135402 /* MoproApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoproApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A5992362CC77A7E00135402 /* mopro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mopro.swift; sourceTree = "<group>"; };
 		2A5992372CC77A7E00135402 /* MoproBindings.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MoproBindings.xcframework; sourceTree = "<group>"; };
+		60BBD73D2E19998200196FF4 /* ecdsa.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ecdsa.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +45,7 @@
 				2A5991EE2CC7722900135402 /* MoproApp */,
 				2A5991ED2CC7722900135402 /* Products */,
 				2A5992382CC77A7E00135402 /* MoproiOSBindings */,
+				60BBD73D2E19998200196FF4 /* ecdsa.json */,
 			);
 			sourceTree = "<group>";
 		};
@@ -127,6 +130,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				60BBD73E2E19998200196FF4 /* ecdsa.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

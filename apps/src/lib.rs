@@ -34,9 +34,22 @@ pub enum Risc0Error {
 }
 
 #[derive(uniffi::Object)]
+pub struct AssertionProofOutput {
+    pub signature_data: SignatureData,
+    pub proof: Risc0ProofOutput
+}
+
+#[derive(uniffi::Object)]
 pub struct Risc0ProofOutput {
-    pub journal: Vec<u8>,
     pub receipt: Vec<u8>,
+}
+
+#[derive(uniffi::Object)]
+pub struct SignatureData {
+    pub signature_r: [u8; 32],
+    pub signature_s: [u8; 32],
+    pub public_key_x: [u8; 32],
+    pub public_key_y: [u8; 32],
 }
 
 #[uniffi::export]
@@ -64,25 +77,18 @@ pub fn prove_attestation() -> Result<Risc0ProofOutput, Risc0Error> {
             &ProverOpts::fast()
         ).map_err(|e| Risc0Error::ProveError(e.to_string()))?
         .receipt;
-
-    // Encode the seal with the selector.
-    // let _seal = encode_seal(&receipt)?;
-
-    // Extract the journal from the receipt.
-    let journal_bytes = receipt.journal.bytes.clone();
-
+    
     let receipt_bytes = bincode::serialize(&receipt)
         .map_err(|e| Risc0Error::SerializeError(format!("Failed to serialize receipt: {}", e)))?;
 
     // Return the journal and receipt as output.
     Ok(Risc0ProofOutput {
-        journal: journal_bytes,
         receipt: receipt_bytes,
     })
 }
 
 #[uniffi::export]
-pub fn prove_assertion() -> Result<Risc0ProofOutput, Risc0Error> {
+pub fn prove_assertion() -> Result<AssertionProofOutput, Risc0Error> {
     env_logger::init();
 
     let env = ExecutorEnv::builder().build().map_err(|e| {
@@ -99,14 +105,22 @@ pub fn prove_assertion() -> Result<Risc0ProofOutput, Risc0Error> {
         .receipt;
 
     // Extract the journal from the receipt.
-    let journal_bytes = receipt.journal.bytes.clone();
+    let journal_parts: [Vec<u8>; 4] = receipt.journal.decode().unwrap();
+    let signature_data = SignatureData {
+        signature_r: journal_parts[0].as_slice().try_into().unwrap(),
+        signature_s: journal_parts[1].as_slice().try_into().unwrap(),
+        public_key_x: journal_parts[2].as_slice().try_into().unwrap(),
+        public_key_y: journal_parts[3].as_slice().try_into().unwrap(),
+    };
 
     let receipt_bytes = bincode::serialize(&receipt)
         .map_err(|e| Risc0Error::SerializeError(format!("Failed to serialize receipt: {}", e)))?;
-
-    // Return the journal and receipt as output.
-    Ok(Risc0ProofOutput {
-        journal: journal_bytes,
-        receipt: receipt_bytes,
+    
+    // Return the signature data and receipt as output.
+    Ok(AssertionProofOutput {
+        signature_data,
+        proof: Risc0ProofOutput {
+            receipt: receipt_bytes,
+        },
     })
 }

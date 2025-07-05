@@ -65,12 +65,12 @@ impl Assertion {
     ///
     /// let assertion = Assertion::from_base64("omlzaWduYXR1cmVYRzBFAiEA3P1gbUuJK9dipE03PXibJgDMDJ3BeFp3NDtSL9U5sXECIHn4VZOXWpHpTP8WEXdqiqDQXGYpmEzmFwjlAa2Z7FkScWF1dGhlbnRpY2F0b3JEYXRhWCWkXNlsBrqJ4mRKrRfpKJTm48XHMxXQ8W64SUf50/HoU0AAAAAB").unwrap();
     ///
-    /// match assertion.verify(base64_client_data, app_id, public_key_pem, previous_counter) {
+    /// match assertion.verify(base64_client_data, app_id, public_key_pem, previous_counter, None) {
     ///     Ok(_) => println!("Verification successful!"),
     ///     Err(e) => println!("Verification failed: {}", e),
     /// }
     /// ```
-    pub fn verify(self, base64_client_data: &str, app_id: &str, public_key: &str, previous_counter: u32) -> Result<(), Box<dyn Error>> {
+    pub fn verify(self, base64_client_data: &str, app_id: &str, public_key: &str, previous_counter: u32, verify_signature: Option<bool>) -> Result<[Vec<u8>; 4], Box<dyn Error>> {
 
         let client_data_byte = general_purpose::STANDARD
             .decode(base64_client_data)
@@ -94,8 +94,10 @@ impl Assertion {
             .map_err(|_| AppAttestError::Message("invalid signature format".to_string()))?;
 
         // 3. Use the public key that you store from the attestation object to verify that the assertion’s signature is valid for nonce.
-        if verifying_key.verify(nonce_hash.as_slice(), &signature).is_err() {
-            return Err(Box::new(AppAttestError::InvalidSignature));
+        if verify_signature.unwrap_or(true) {
+            if verifying_key.verify(nonce_hash.as_slice(), &signature).is_err() {
+                return Err(Box::new(AppAttestError::InvalidSignature));
+            }
         }
 
         // 4. Compute the SHA256 hash of the client’s App ID, and verify that it matches the RP ID in the authenticator data.
@@ -105,13 +107,15 @@ impl Assertion {
         if auth_data.counter <= previous_counter {
             return Err(Box::new(AppAttestError::InvalidCounter));
         }
- 
-        // // 6. Verify that the embedded challenge in the client data matches the earlier challenge to the client.
-        // if stored_challenge != client_data.challenge {
-        //     return Err(Box::new(AppAttestError::Message("challenge mismatch".to_string())));
-        // }
+        
+        let verification_data = [
+           signature.r().to_bytes().to_vec(),
+            signature.s().to_bytes().to_vec(),
+            verifying_key.to_encoded_point(false).x().unwrap().to_vec(),
+            verifying_key.to_encoded_point(false).y().unwrap().to_vec(),
+        ];
 
-        Ok(())
+        Ok(verification_data)
     }
 }
 

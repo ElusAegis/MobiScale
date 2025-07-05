@@ -16,7 +16,7 @@ o2sbJJzBWMgixFBrFXS2scW1v6+OKh3+PeqofIgC2GPIqsI6qZBWCopWtA==
     
     match assertion_result {
         Ok(assertion) => {
-            match assertion.verify(base64_client_data_json, app_id, public_key, previous_counter) {
+            match assertion.verify(base64_client_data_json, app_id, public_key, previous_counter, None) {
                 Ok(_) => println!("Verification successful!"),
                 Err(e) => println!("Verification failed: {:?}", e),
             }

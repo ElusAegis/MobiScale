@@ -21,3 +21,6 @@ target/
 /output/
 MoproiOSBindings
 /ios/ecdsa.json
+/apps/output/
+/apps/Config.toml
+/ecdsa/Prover.toml

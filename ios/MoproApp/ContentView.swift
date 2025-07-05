@@ -66,7 +66,32 @@ struct ContentView: View {
                     startTimer()
 
                     do {
-                        let proof = try generateNoirProof(circuitPath: circuitPath, srsPath: nil, inputs: ["1", "2"])
+                        // === Step 1: Compute SHA256("Hello World! This is Noir-ECDSA"[..31]) ===
+                        let inputString = "Hello World! This is Noir-ECDSA"
+                        let truncatedData = inputString.prefix(31).data(using: .utf8)!
+                        let hash = SHA256.hash(data: truncatedData)
+                        let hashBytes = Array(hash.prefix(32))  // [UInt8; 32]
+
+                        // === Step 2: Define remaining inputs as hex strings ===
+                        // Each 32-byte value is encoded as 64 hex characters
+                        let rHex   = "6e6dd8df9cec8c31892d01e14318fb3109c73f335657be981f6387c44d3c8e0e"
+                        let sHex   = "262ed99e46e6577a71a75b1d5c7f4acefc34f4b68aa019eda376372f2e762c2d"
+                        let pkXHex = "d54378ffd74c0a0692ea56dc91e14aa683ef4c166c55cfb8d135863fc8f9aa1d"
+                        let pkYHex = "6b6c3604db3440d3dc4ee95a24f0f0c4eae722e511eeb583122a0f6ab2554b36"
+                        
+                        let rBytes   = hexStringToBytes(rHex)
+                        let sBytes   = hexStringToBytes(sHex)
+                        let pkXBytes = hexStringToBytes(pkXHex)
+                        let pkYBytes = hexStringToBytes(pkYHex)
+                        
+                        // === Step 3: Concatenate all values and convert to [String] ===
+                        let allInputs: [String] = (hashBytes + rBytes + sBytes + pkXBytes + pkYBytes).map { String($0) }
+                        print("📏 allInputs.count = \(allInputs.count)")
+                        
+                        // === Step 4: Call Noir proof generation ===
+                        let proof = try generateNoirProof(circuitPath: circuitPath, srsPath: nil, inputs: allInputs)
+                        
+                        // === Step 5: Verify the Noir proof ===
                         let verifies = try verifyNoirProof(circuitPath: circuitPath, proof: proof)
                         
                         assert(verifies)
@@ -245,6 +270,19 @@ struct ContentView: View {
             log = "❌ Assertion error: \(error.localizedDescription)"
         }
     }
+}
+
+func hexStringToBytes(_ hex: String) -> [UInt8] {
+    var bytes = [UInt8]()
+    var index = hex.startIndex
+    while index < hex.endIndex {
+        let byteStr = hex[index..<hex.index(index, offsetBy: 2)]
+        if let byte = UInt8(byteStr, radix: 16) {
+            bytes.append(byte)
+        }
+        index = hex.index(index, offsetBy: 2)
+    }
+    return bytes
 }
 //
 //#Preview {

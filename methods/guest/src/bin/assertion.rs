@@ -32,8 +32,11 @@ o2sbJJzBWMgixFBrFXS2scW1v6+OKh3+PeqofIgC2GPIqsI6qZBWCopWtA==
     
     match assertion_result {
         Ok(assertion) => {
-            match assertion.verify(base64_client_data, app_id, public_key, previous_counter) {
-                Ok(_) => println!("Verification successful!"),
+            match assertion.verify(base64_client_data, app_id, public_key, previous_counter, Some(false)) {
+                Ok(result) => { 
+                    println!("Verification successful!");
+                    env::commit(&result);
+                },
                 Err(e) => println!("Verification failed: {:?}", e),
             }
         },

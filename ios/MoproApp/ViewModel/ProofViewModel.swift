@@ -10,6 +10,8 @@ final class ProofViewModel: ObservableObject {
     @Published var isRunning = false
     @Published var elapsed: TimeInterval = 0
     @Published var randomPayloadString: String?
+    /// Non‑nil when we fell back to dummy data
+    @Published var warningMessage: String?
 
     // MARK: -- Cached artifacts
     var attestationResult: AttestationResult?
@@ -22,6 +24,35 @@ final class ProofViewModel: ObservableObject {
     private let enclave = SecureEnclaveService()
     private let prover  = ProverService()
 
+    // MARK: -- Warning helper
+    private func showTemporaryWarning(_ text: String, seconds: TimeInterval = 6) {
+        warningMessage = text
+        // Clear after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
+            self?.warningMessage = nil
+        }
+    }
+
+    // MARK: -- Safe generators
+    private func safeGenerateAssertion(payload: Data) async -> (AssertionResult, Bool) {
+        do {
+            let res = try await enclave.generateAssertion(payload: payload)
+            return (res, false)
+        } catch {
+            let dummy = generateDummyAssertion(payload: payload)
+            return (dummy, true)
+        }
+    }
+    private func safeGenerateAttestation(challenge: Data) async -> (AttestationResult, Bool) {
+        do {
+            let res = try await enclave.generateAttestation(challenge: challenge)
+            return (res, false)
+        } catch {
+            let dummy = generateDummyAttestation(challenge: challenge)
+            return (dummy, true)
+        }
+    }
+
     // MARK: -- UI actions
     func generateAttestation() {
         guard !isRunning else { return }
@@ -33,8 +64,14 @@ final class ProofViewModel: ObservableObject {
                 let challenge = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
 
                 // 1️⃣ Attestation & RISC-0 proof
-                let att = try await self?.enclave.generateAttestation(challenge: challenge)
-                let rec = try await self?.prover.proveAttestationExt(att: att!)
+                let (att, usedDummy) = await self!.safeGenerateAttestation(challenge: challenge)
+                if usedDummy {
+                    await MainActor.run {
+                        self?.showTemporaryWarning("⚠️ Falling back to dummy attestation. Original generation failed.")
+                    }
+                }
+                
+                let rec = try await self?.prover.proveAttestationExt(att: att)
                 
                 await self?.storeAttestation(att, proof: rec)
                 await self?.finish("✅ Attestation OK (\(rec?.risc0Receipt.count ?? 0) bytes)")
@@ -44,19 +81,22 @@ final class ProofViewModel: ObservableObject {
         }
     }
 
-    func generateAssertion() {
-        guard !isRunning, let att = attestationResult else { return }
+    func generateAssertion(payloadString: String) {
+        guard !isRunning, let _ = attestationResult else { return }
 
         start()
         Task.detached(priority: .userInitiated) { [weak self] in
             do {
-                // Random payload (show it later)
-                let payloadString = UUID().uuidString
                 let payload = Data(payloadString.utf8)
 
                 // 2️⃣ Assertion (sign payload) & composite proof
-                let asr = try await self?.enclave.generateAssertion(payload: payload)
-                let comp = try await self?.prover.proveAssertionExt(assertionResult: asr!)
+                let (asr, usedDummy) = await self!.safeGenerateAssertion(payload: payload)
+                if usedDummy {
+                    await MainActor.run {
+                        self?.showTemporaryWarning("⚠️ Falling back to dummy assertion. Original generation failed.")
+                    }
+                }
+                let comp = try await self?.prover.proveAssertionExt(assertionResult: asr)
 
                 await self?.storeAssertion(asr, composite: comp, payloadString: payloadString)
                 await self?.finish("✅ Full proof OK (Noir \(comp?.noirProof.count ?? 0) B)")
@@ -86,7 +126,7 @@ final class ProofViewModel: ObservableObject {
         isRunning = false
     }
 
-    private func storeAttestation(_ att: AttestationResult?, proof: AttestationExtProof?) {
+    public func storeAttestation(_ att: AttestationResult?, proof: AttestationExtProof?) {
         attestationResult = att
         attestationProof = proof
     }

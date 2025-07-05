@@ -1,39 +1,37 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var vm = ProofViewModel()
+    @StateObject private var flow = AppFlowViewModel()
 
     var body: some View {
-        VStack(spacing: 20) {
-
-            Text("App Attest Prototype")
-                .font(.title)
-
-            ScrollView {
-                Text(vm.log)
-                    .font(.caption2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        VStack {
+            switch flow.phase {
+            case .photo:
+                PhotoInferenceView { result in
+                    flow.mlOutput = result
+                    flow.appendLog("ML inference complete")
+                    flow.phase = .randomness
+                }
+            case .randomness:
+                RandomnessView(flow: flow) { result in
+                    flow.challenge = result
+                    flow.appendLog("Challenge obtained")
+                    flow.phase = .attestation
+                }
+            case .attestation:
+                AttestationView { att, proof in
+                    flow.appendLog("Attestation proof ready")
+                    flow.phase = .assertion
+                }
+            case .assertion:
+                AssertionView(flow: flow) { asr, comp in
+                    flow.assertion = (asr, comp)
+                    flow.appendLog("Assertion proof ready")
+                    flow.phase = .done
+                }
+            case .done:
+                DoneView(flow: flow)
             }
-            .frame(height: 120)
-
-            if let payload = vm.randomPayloadString {
-                Text("Payload: \(payload)")
-                    .font(.caption)
-            }
-
-            if vm.isRunning {
-                Text("⏱ \(Int(vm.elapsed)) s")
-                    .font(.caption)
-            }
-
-            HStack {
-                Button("Generate Attestation")  { vm.generateAttestation() }
-                    .disabled(vm.isRunning)
-
-                Button("Generate Assertion")    { vm.generateAssertion() }
-                    .disabled(vm.isRunning || vm.attestationResult == nil)
-            }
-            .buttonStyle(.borderedProminent)
         }
         .padding()
     }

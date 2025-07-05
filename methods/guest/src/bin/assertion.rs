@@ -34,10 +34,10 @@ o2sbJJzBWMgixFBrFXS2scW1v6+OKh3+PeqofIgC2GPIqsI6qZBWCopWtA==
         Ok(assertion) => {
             match assertion.verify(base64_client_data, app_id, public_key, previous_counter, Some(false)) {
                 Ok(result) => { 
-                    println!("Verification successful!");
+                    println!("Assertion verification successful!");
                     env::commit(&result);
                 },
-                Err(e) => println!("Verification failed: {:?}", e),
+                Err(e) => println!("Assertion verification failed: {:?}", e),
             }
         },
         Err(e) => println!("Failed to decode and create assertion: {:?}", e),

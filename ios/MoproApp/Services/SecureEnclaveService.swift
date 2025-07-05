@@ -53,10 +53,11 @@ public actor SecureEnclaveService {
         )
 
         return AssertionResult(
-                               appID: appID,
-                               keyID: keyID,
-                               assertion: assertion,
-                               payload: payload)
+            appID: appID,
+            keyID: keyID,
+            assertion: assertion,
+            payload: payload
+        )
     }
 
     /// Returns a cached App Attest key ID, or generates & persists a new one.

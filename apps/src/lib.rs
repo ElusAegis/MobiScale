@@ -53,7 +53,6 @@ pub struct SignatureData {
 
 #[uniffi::export]
 pub fn prove_attestation() -> Result<Risc0ProofOutput, Risc0Error> {
-    env_logger::init();
     // Parse CLI Arguments: The application starts by parsing command-line arguments provided by the user.
 
     // // Create an alloy provider for that private key and URL.
@@ -88,7 +87,6 @@ pub fn prove_attestation() -> Result<Risc0ProofOutput, Risc0Error> {
 
 #[uniffi::export]
 pub fn prove_assertion() -> Result<AssertionProofOutput, Risc0Error> {
-    env_logger::init();
 
     let env = ExecutorEnv::builder().build().map_err(|e| {
         Risc0Error::ProveError(format!("Failed to create ExecutorEnv: {}", e))

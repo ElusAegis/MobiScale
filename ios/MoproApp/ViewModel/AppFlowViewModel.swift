@@ -6,7 +6,7 @@ final class AppFlowViewModel: ObservableObject {
     enum Phase { case introduction, photoSelection, identityMatchSuccess, randomness, attestation, assertion, done }
 
     // MARK: – Public state
-    @Published var phase: Phase = .introduction
+    @Published var phase: Phase = .identityMatchSuccess
     @Published var log: String  = "Ready"
     @Published var warning: String?
 

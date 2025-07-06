@@ -3,10 +3,10 @@ import Foundation
 @MainActor
 final class AppFlowViewModel: ObservableObject {
 
-    enum Phase { case photo, randomness, attestation, assertion, done }
+    enum Phase { case introduction, photo, randomness, attestation, assertion, done }
 
     // MARK: – Public state
-    @Published var phase: Phase = .photo
+    @Published var phase: Phase = .introduction
     @Published var log: String  = "Ready"
     @Published var warning: String?
 

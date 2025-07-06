@@ -6,6 +6,10 @@ struct ContentView: View {
     var body: some View {
         VStack {
             switch flow.phase {
+            case .introduction:
+                IntroductionView {
+                    flow.phase = .photo
+                }
             case .photo:
                 IdentityMatchView { result in
                     flow.mlOutput = result

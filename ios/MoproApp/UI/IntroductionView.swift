@@ -92,28 +92,13 @@ struct IntroductionView: View {
             
             // Fixed button at bottom
             VStack(spacing: 8) {
-                Button(action: onStart) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "arrow.right.circle.fill")
-                            .font(.title3)
-                        Text("Start Verification")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.blue, Color.blue.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
-                    .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                PrimaryButton(
+                    title: "Start Verification",
+                    icon: "arrow.right.circle.fill",
+                    color: .blue
+                ) {
+                    onStart()
                 }
-                .buttonStyle(PlainButtonStyle())
                 
                 Text("Takes about 5 minutes to complete")
                     .font(.caption2)

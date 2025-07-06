@@ -98,12 +98,13 @@ struct PhotoSelectionView: View {
             // Start Verification Button (fixed at bottom)
             if canStartVerification {
                 VStack(spacing: 8) {
-                    Button("Start Verification") {
+                    PrimaryButton(
+                        title: "Start Verification",
+                        icon: "checkmark.shield",
+                        color: .blue
+                    ) {
                         vm.compareFaces(onComplete: onComplete)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
                     
                     // Debug reset button
                     Button("Reset All Photos") {

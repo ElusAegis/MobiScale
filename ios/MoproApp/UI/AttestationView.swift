@@ -50,15 +50,16 @@ struct AttestationView: View {
             Spacer()
 
             // Action button
-            Button {
+            PrimaryButton(
+                title: "Generate Attestation Proof",
+                icon: "shield.checkerboard",
+                color: .blue,
+                isDisabled: vm.step != .idle || flow.challenge?.bytes == nil
+            ) {
                 if let challenge = flow.challenge?.bytes {
                     vm.run(challenge: challenge)
                 }
-            } label: {
-                Label("Generate Attestation Proof", systemImage: "shield.checkerboard")
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(vm.step != .idle || flow.challenge?.bytes == nil)
         }
         .padding()
         .onAppear { vm.onCompletion = onDone }

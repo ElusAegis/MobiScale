@@ -30,7 +30,7 @@ struct ContentView: View {
             case .randomness:
                 RandomnessView(flow: flow) { result in
                     flow.challenge = result
-                    flow.appendLog("Challenge obtained")
+                    flow.appendLog("Challenge obtained from DRAND")
                     flow.phase = .attestation
                 }
             case .attestation:

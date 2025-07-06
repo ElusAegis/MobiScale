@@ -148,28 +148,13 @@ struct IdentityMatchSuccessView: View {
             
             // Fixed button at bottom
             VStack(spacing: 8) {
-                Button(action: onContinue) {
-                    HStack(spacing: 12) {
-                        Image(systemName: "lock.shield.fill")
-                            .font(.title3)
-                        Text("Generate Device Attestation")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.blue, Color.blue.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .foregroundColor(.white)
-                    .cornerRadius(16)
-                    .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                PrimaryButton(
+                    title: "Generate Device Attestation",
+                    icon: "lock.shield.fill",
+                    color: .blue
+                ) {
+                    onContinue()
                 }
-                .buttonStyle(PlainButtonStyle())
                 
                 Text("Proves verification on genuine iPhone")
                     .font(.caption2)
@@ -183,22 +168,4 @@ struct IdentityMatchSuccessView: View {
     }
 }
 
-struct DetailRow: View {
-    let title: String
-    let value: String
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-            
-            Spacer()
-            
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .fontDesign(.monospaced)
-        }
-    }
-}
+

@@ -1,6 +1,7 @@
 import Foundation
 import PhotosUI
 import CryptoKit
+import Vision
 
 @MainActor
 final class IdentityMatchViewModel: ObservableObject {
@@ -11,6 +12,7 @@ final class IdentityMatchViewModel: ObservableObject {
     @Published var error: String?
 
     private let modelId = "passport-selfie-v0.1"
+    private let similarityThreshold: Float = 0.40   // lower = stricter match
 
     func processImages(passportData: Data?, selfieData: Data?, onComplete: @escaping (Data) -> Void) {
         step = .comparing
@@ -23,20 +25,23 @@ final class IdentityMatchViewModel: ObservableObject {
                 }
                 return
             }
-            // Placeholder ML model: compare SHA-256 hashes equality
+            // Persist the raw SHA‑256 hashes for audit purposes
             let pHash = Data(SHA256.hash(data: passportData))
             let sHash = Data(SHA256.hash(data: selfieData))
-            let decision = (pHash == sHash) // obviously false in real life – placeholder
 
+            // -------- Face‑to‑face similarity --------
+            let isMatch = try FaceEmbeddingService().evaluateMatch(passport: passportData, selfie: selfieData)
+            
             let output = IdentityMatchOutput(
                 passportPhotoHash: pHash,
-                selfiePhotoHash: sHash,
-                modelId: modelId,
-                match: decision
+                selfiePhotoHash:   sHash,
+                modelId:           modelId,
+                isMatch:           isMatch
             )
             
             await MainActor.run {
-                if decision {
+                
+                if output.isMatch {
                     // Match successful - proceed with attestation
                     if let json = try? JSONEncoder().encode(output) {
                         self.resultData = json

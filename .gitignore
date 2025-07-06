@@ -24,3 +24,7 @@ MoproiOSBindings
 /apps/output/
 /apps/Config.toml
 /ecdsa/Prover.toml
+
+venv/
+BuffaloL.mlmodel
+/mlconvert/buffalo_l

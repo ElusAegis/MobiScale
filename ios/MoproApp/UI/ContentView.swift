@@ -8,14 +8,25 @@ struct ContentView: View {
             switch flow.phase {
             case .introduction:
                 IntroductionView {
-                    flow.phase = .photo
+                    flow.phase = .photoSelection
                 }
-            case .photo:
-                IdentityMatchView { result in
-                    flow.mlOutput = result
+            case .photoSelection:
+                PhotoSelectionView { output in
+                    flow.identityMatchOutput = output
+                    flow.mlOutput = try? JSONEncoder().encode(output)
+                    print("🔄 ML output: \(flow.mlOutput)")
+                    print("🔄 Identity match output: \(flow.identityMatchOutput)")
+                    print("🔄 Identity match complete")
                     flow.appendLog("Identity match complete")
-                    flow.phase = .randomness
+                    flow.phase = .identityMatchSuccess
                 }
+            case .identityMatchSuccess:
+                IdentityMatchSuccessView(
+                    output: flow.identityMatchOutput,
+                    onContinue: {
+                        flow.proceedToRandomness()
+                    }
+                )
             case .randomness:
                 RandomnessView(flow: flow) { result in
                     flow.challenge = result

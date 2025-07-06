@@ -3,7 +3,7 @@ import Foundation
 @MainActor
 final class AppFlowViewModel: ObservableObject {
 
-    enum Phase { case introduction, photo, randomness, attestation, assertion, done }
+    enum Phase { case introduction, photoSelection, identityMatchSuccess, randomness, attestation, assertion, done }
 
     // MARK: – Public state
     @Published var phase: Phase = .introduction
@@ -12,6 +12,7 @@ final class AppFlowViewModel: ObservableObject {
 
     // Final artefacts
     var mlOutput:      Data?
+    var identityMatchOutput: IdentityMatchOutput?
     var challenge: RandomnessChallenge?
     var attestation:   (AttestationResult, AttestationExtProof)?
     var assertion:     (AssertionResult, AssertionCompositeProof)?
@@ -34,6 +35,10 @@ final class AppFlowViewModel: ObservableObject {
         challenge = c
         appendLog("Received LoE challenge – round \(c.meta.round)")
         phase = .attestation
+    }
+    
+    func proceedToRandomness() {
+        phase = .randomness
     }
 
     func runAssertion() async {

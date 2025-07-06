@@ -21,7 +21,6 @@ final class IdentityMatchViewModel: ObservableObject {
     private let modelId = "passport-selfie-v0.1"
     private var passportMetadata: FaceMetadata?
     private var selfieMetadata: FaceMetadata?
-    private var onComplete: ((Data) -> Void)?
 
     func processImage(_ imageData: Data, for type: ImageType) {
         isProcessing = true
@@ -41,11 +40,11 @@ final class IdentityMatchViewModel: ObservableObject {
                     case .passport:
                         self.passportMetadata = FaceMetadata.init(embedding: faceEmbedding, photoHash: photoHash)
                         self.passportValidated = true
-                        self.step = .captureSelfie
+                        // Don't auto-advance, let user choose when to proceed
                     case .selfie:
                         self.selfieMetadata = FaceMetadata.init(embedding: faceEmbedding, photoHash: photoHash)
                         self.selfieValidated = true
-                        self.compareFaces()
+                        // Don't auto-advance, let user choose when to proceed
                     }
                     self.isProcessing = false
                 }
@@ -61,6 +60,8 @@ final class IdentityMatchViewModel: ObservableObject {
                             self.error = "Failed to process passport photo: \(error.localizedDescription)"
                         }
                         self.passportValidated = false
+                        // Reset passport photo when it fails
+                        self.passportMetadata = nil
                     case .selfie:
                         if error.localizedDescription.contains("No face found") {
                             self.error = "No face detected in selfie. Please try again with a clearer photo."
@@ -70,6 +71,8 @@ final class IdentityMatchViewModel: ObservableObject {
                             self.error = "Failed to process selfie: \(error.localizedDescription)"
                         }
                         self.selfieValidated = false
+                        // Reset selfie photo when it fails
+                        self.selfieMetadata = nil
                     }
                     self.isProcessing = false
                 }
@@ -94,10 +97,9 @@ final class IdentityMatchViewModel: ObservableObject {
         }
     }
 
-    private func compareFaces() {
+    func compareFaces(onComplete: @escaping ((IdentityMatchOutput) -> Void)) {
         guard let passportMetadata = passportMetadata,
-              let selfieMetadata = selfieMetadata,
-              let onComplete = onComplete else {
+              let selfieMetadata = selfieMetadata else {
             error = "Missing face embeddings"
             return
         }
@@ -120,36 +122,24 @@ final class IdentityMatchViewModel: ObservableObject {
             await MainActor.run {
                 if match {
                     self.output = output
-                    if let json = try? JSONEncoder().encode(output) {
-                        self.resultData = json
-                        self.step = .success
-                    } else {
-                        self.error = "Failed to encode result"
-                        self.step = .selectPassport
-                    }
+                    print("✅ Verification successful! Score: \(score)")
+                    onComplete(output)
                 } else {
-                    self.error = "Sorry, we could not quite match the photo to yourself. Please try again."
+                    self.error = "Sorry, we could not quite match the photo to yourself. Confidence: \(score) > threshold: \(threshold). Please try again."
                     print("🧠 No match found. Cosine similarity: \(score)")
-                    self.step = .selectPassport
+                    // Reset both photos when verification fails
+                    self.resetForRetry()
                 }
             }
         }
     }
-
-    func setCompletionHandler(_ completion: @escaping (Data) -> Void) {
-        self.onComplete = completion
+    
+    func getOutput() -> IdentityMatchOutput? {
+        return output
     }
     
-    func proceedToAttestation() {
-        guard let onComplete = onComplete,
-              let resultData = resultData else { return }
-        step = .done
-        onComplete(resultData)
-    }
-
     func resetForRetry() {
         step = .selectPassport
-        error = nil
         resultData = nil
         output = nil
         isProcessing = false
@@ -158,6 +148,20 @@ final class IdentityMatchViewModel: ObservableObject {
         passportMetadata = nil
         selfieMetadata = nil
         print("🔄 Reset for retry - all state cleared")
+    }
+    
+    func resetPassportOnly() {
+        passportValidated = false
+        passportMetadata = nil
+        error = nil
+        print("🔄 Reset passport only")
+    }
+    
+    func resetSelfieOnly() {
+        selfieValidated = false
+        selfieMetadata = nil
+        error = nil
+        print("🔄 Reset selfie only")
     }
     
     func retryCurrentStep() {

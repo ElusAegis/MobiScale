@@ -24,11 +24,22 @@ struct FaceEmbeddingService {
     
     // MARK: - Public API ----------------------------------------------------
     mutating func embedding(from jpeg: Data) throws -> [Float] {
+        print("🔍 Starting face embedding process...")
+        
         let cg = try cropLargestFace(from: jpeg)
+        print("✅ Face cropped successfully")
+        
         let arr = try mlMultiArray(from: cg)        // shape [3,112,112]
+        print("✅ MLMultiArray created successfully")
+        
         let out = try model.prediction(input_1: arr)
+        print("✅ Model prediction completed")
+        
         let raw = out._683                     // MLMultiArray [512]
-        return unitNorm(raw)
+        let result = unitNorm(raw)
+        print("✅ Face embedding generated: \(result.count) dimensions")
+        
+        return result
     }
     
     func cosine(_ a: [Float], _ b: [Float]) -> Float {
@@ -37,24 +48,42 @@ struct FaceEmbeddingService {
     
     // MARK: - Internals -----------------------------------------------------
     private func cropLargestFace(from jpeg: Data) throws -> CGImage {
+        print("🔍 Detecting faces in image...")
+        
         let handler = VNImageRequestHandler(data: jpeg, options: [:])
         let req     = VNDetectFaceRectanglesRequest()
         try handler.perform([req])
 
-        guard
-            let face = (req.results)?
-                       .max(by: { $0.boundingBox.area < $1.boundingBox.area })
-        else {
+        guard let results = req.results, !results.isEmpty else {
+            print("❌ No faces detected in image")
             throw NSError(domain: "Face", code: 1,
                           userInfo: [NSLocalizedDescriptionKey: "No face found"])
         }
-        let image = CIImage(data: jpeg)!
+        
+        print("✅ Found \(results.count) face(s) in image")
+        
+        guard let face = results.max(by: { $0.boundingBox.area < $1.boundingBox.area }) else {
+            print("❌ Failed to find largest face")
+            throw NSError(domain: "Face", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: "No face found"])
+        }
+        
+        guard let image = CIImage(data: jpeg) else {
+            print("❌ Failed to create CIImage from data")
+            throw NSError(domain: "Face", code: 2,
+                          userInfo: [NSLocalizedDescriptionKey: "Invalid image data"])
+        }
+        
         let context = CIContext()
         let boundingBox = VNImageRectForNormalizedRect(face.boundingBox, Int(image.extent.width), Int(image.extent.height))
         let croppedCIImage = image.cropped(to: boundingBox)
+        
         guard let cg = context.createCGImage(croppedCIImage, from: croppedCIImage.extent) else {
+            print("❌ Failed to create CGImage from cropped face")
             throw NSError(domain: "Face", code: 2, userInfo: [NSLocalizedDescriptionKey: "Failed to create CGImage from cropped face"])
         }
+        
+        print("✅ Face cropped and resized successfully")
         return cg.resize(to: CGSize(width: size, height: size))
     }
     

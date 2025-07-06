@@ -40,8 +40,20 @@ struct IdentityMatchView: View {
                     if let newValue = newValue {
                         vm.error = nil // Clear any previous errors
                         Task {
-                            if let data = try? await newValue.loadTransferable(type: Data.self) {
-                                vm.processImage(data, for: .passport)
+                            do {
+                                if let data = try await newValue.loadTransferable(type: Data.self) {
+                                    vm.processImage(data, for: .passport)
+                                } else {
+                                    await MainActor.run {
+                                        vm.error = "Failed to load passport photo. Please try again."
+                                        vm.isProcessing = false
+                                    }
+                                }
+                            } catch {
+                                await MainActor.run {
+                                    vm.error = "Failed to load passport photo: \(error.localizedDescription)"
+                                    vm.isProcessing = false
+                                }
                             }
                         }
                     }
@@ -75,6 +87,7 @@ struct IdentityMatchView: View {
                 }
                 .onChange(of: selfieData) { _, newValue in
                     if let newValue = newValue {
+                        vm.error = nil // Clear any previous errors
                         vm.processImage(newValue, for: .selfie)
                     }
                 }
@@ -103,16 +116,27 @@ struct IdentityMatchView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(8)
                     
-                    if vm.step == .selectPassport {
-                        VStack(spacing: 12) {
+                    VStack(spacing: 12) {
+                        if vm.step == .selectPassport {
                             Text("Please select a new passport photo and take a fresh selfie.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
                             
-                            Button("Try Again") {
+                            Button("Start Over") {
                                 vm.resetForRetry()
                                 passportItem = nil
+                                selfieData = nil
+                            }
+                            .buttonStyle(.borderedProminent)
+                        } else if vm.step == .captureSelfie {
+                            Text("Please try taking a clearer selfie with better lighting.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.center)
+                            
+                            Button("Retry Selfie") {
+                                vm.retryCurrentStep()
                                 selfieData = nil
                             }
                             .buttonStyle(.borderedProminent)

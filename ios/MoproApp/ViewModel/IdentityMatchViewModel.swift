@@ -31,7 +31,10 @@ final class IdentityMatchViewModel: ObservableObject {
             let photoHash = Data(SHA256.hash(data: imageData))
             
             do {
-                let faceEmbedding = try svc.embedding(from: imageData)
+                // Add timeout protection
+                let faceEmbedding = try await withTimeout(seconds: 30) {
+                    try self.svc.embedding(from: imageData)
+                }
                 
                 await MainActor.run {
                     switch type {
@@ -50,15 +53,44 @@ final class IdentityMatchViewModel: ObservableObject {
                 await MainActor.run {
                     switch type {
                     case .passport:
-                        self.error = "No face detected in passport photo. Please try again."
+                        if error.localizedDescription.contains("No face found") {
+                            self.error = "No face detected in passport photo. Please try again with a clearer photo."
+                        } else if error.localizedDescription.contains("timeout") {
+                            self.error = "Processing timed out. Please try again."
+                        } else {
+                            self.error = "Failed to process passport photo: \(error.localizedDescription)"
+                        }
                         self.passportValidated = false
                     case .selfie:
-                        self.error = "No face detected in selfie. Please try again."
+                        if error.localizedDescription.contains("No face found") {
+                            self.error = "No face detected in selfie. Please try again with a clearer photo."
+                        } else if error.localizedDescription.contains("timeout") {
+                            self.error = "Processing timed out. Please try again."
+                        } else {
+                            self.error = "Failed to process selfie: \(error.localizedDescription)"
+                        }
                         self.selfieValidated = false
                     }
                     self.isProcessing = false
                 }
             }
+        }
+    }
+    
+    private func withTimeout<T>(seconds: TimeInterval, operation: @escaping () async throws -> T) async throws -> T {
+        try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask {
+                try await operation()
+            }
+            
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+                throw NSError(domain: "Timeout", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation timed out after \(seconds) seconds"])
+            }
+            
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
         }
     }
 
@@ -75,7 +107,7 @@ final class IdentityMatchViewModel: ObservableObject {
         Task {
             // Placeholder face comparison - compute cosine similarity
             let score = svc.cosine(passportMetadata.embedding, selfieMetadata.embedding)
-            let threshold: Float = 0.7
+            let threshold: Float = 0.6
             let match = score >= threshold
             
             let output = IdentityMatchOutput(
@@ -97,7 +129,7 @@ final class IdentityMatchViewModel: ObservableObject {
                     }
                 } else {
                     self.error = "Sorry, we could not quite match the photo to yourself. Please try again."
-                    print("")
+                    print("🧠 No match found. Cosine similarity: \(score)")
                     self.step = .selectPassport
                 }
             }
@@ -125,6 +157,13 @@ final class IdentityMatchViewModel: ObservableObject {
         selfieValidated = false
         passportMetadata = nil
         selfieMetadata = nil
+        print("🔄 Reset for retry - all state cleared")
+    }
+    
+    func retryCurrentStep() {
+        error = nil
+        isProcessing = false
+        print("🔄 Retrying current step")
     }
 }
 

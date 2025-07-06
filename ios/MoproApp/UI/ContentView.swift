@@ -7,9 +7,9 @@ struct ContentView: View {
         VStack {
             switch flow.phase {
             case .photo:
-                PhotoInferenceView { result in
+                IdentityMatchView { result in
                     flow.mlOutput = result
-                    flow.appendLog("ML inference complete")
+                    flow.appendLog("Identity match complete")
                     flow.phase = .randomness
                 }
             case .randomness:

@@ -6,12 +6,12 @@ final class AppFlowViewModel: ObservableObject {
     enum Phase { case introduction, photoSelection, identityMatchSuccess, randomness, attestation, assertion, done }
 
     // MARK: – Public state
-    @Published var phase: Phase = .identityMatchSuccess
+    @Published var phase: Phase = .assertion
     @Published var log: String  = "Ready"
     @Published var warning: String?
 
-    // Final artefacts
-    var mlOutput:      Data?
+    // Final artefacts 
+    var mlOutput: Data? = Data(base64Encoded: "eyJpZCI6IjEiLCJ0eXBlIjoiY29kZSIsImNvZGUiOiJjb2RlIn0=") // TODO - remove this
     var identityMatchOutput: IdentityMatchOutput?
     var challenge: RandomnessChallenge?
     var attestation:   (AttestationResult, AttestationExtProof)?
@@ -41,14 +41,24 @@ final class AppFlowViewModel: ObservableObject {
         phase = .randomness
     }
 
-    func runAssertion() async {
-        guard let _ = attestation else { return }   // sanity check
-        guard let payload = mlOutput else { return }
-        
-        let (asr, comp, usedDummy) = await service.generateAssertion(payload: payload)
-        if usedDummy { showWarning("⚠️ Dummy assertion used") }
+    func runAssertion() async -> Bool {
+        guard let payload = mlOutput else { 
+            appendLog("❌ No ML output available for assertion")
+            return false 
+        }
 
-        assertion = (asr, comp)
-        appendLog("Assertion done – final proof \(comp.noirProof.count + comp.risc0Receipt.count) bytes")
+        print("🔄 AppFlowViewModel: Running assertion with \(payload.count) bytes of data")
+        
+        do {
+            let (asr, comp, usedDummy) = await service.generateAssertion(payload: payload)
+            if usedDummy { showWarning("⚠️ Dummy assertion used") }
+
+            assertion = (asr, comp)
+            appendLog("Assertion done – final proof \(comp.noirProof.count + comp.risc0Receipt.count) bytes")
+            return true
+        } catch {
+            appendLog("❌ Assertion failed: \(error.localizedDescription)")
+            return false
+        }
     }
 }

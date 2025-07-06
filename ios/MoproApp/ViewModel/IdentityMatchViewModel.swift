@@ -1,92 +1,129 @@
 import Foundation
 import PhotosUI
 import CryptoKit
-import Vision
+import UIKit
 
 @MainActor
 final class IdentityMatchViewModel: ObservableObject {
     enum Step { case selectPassport, captureSelfie, comparing, done }
 
+    
     @Published var step: Step = .selectPassport
     @Published var resultData: Data?
     @Published var error: String?
+    @Published var isProcessing = false
+    @Published var passportValidated = false
+    @Published var selfieValidated = false
+    private var svc = FaceEmbeddingService()
+
 
     private let modelId = "passport-selfie-v0.1"
-    private let similarityThreshold: Float = 0.70   // ArcFace w600k_r50 recommended
+    private var passportMetadata: FaceMetadata?
+    private var selfieMetadata: FaceMetadata?
+    private var onComplete: ((Data) -> Void)?
 
-    func processImages(passportData: Data?, selfieData: Data?, onComplete: @escaping (Data) -> Void) {
-        step = .comparing
+    func processImage(_ imageData: Data, for type: ImageType) {
+        isProcessing = true
+        error = nil
+        
         Task {
-            // --- 0. Byte check -------------------------------------------------
-            guard let passportData = passportData, let selfieData = selfieData else {
-                await MainActor.run {
-                    self.error = "Unable to read images"
-                    self.step  = .selectPassport
-                }
-                return
-            }
-
-            // --- 1. Audit SHA‑256 fingerprints --------------------------------
-            let pHash = Data(SHA256.hash(data: passportData))
-            let sHash = Data(SHA256.hash(data: selfieData))
-
-            // --- 2. Face embeddings  ------------------------------------------
-            var svc = FaceEmbeddingService()
-            let passportVec: [Float]
+            let photoHash = Data(SHA256.hash(data: imageData))
+            
             do {
-                passportVec = try svc.embedding(from: passportData)
-            } catch {
+                let faceEmbedding = try svc.embedding(from: imageData)
+                
                 await MainActor.run {
-                    self.error = "No face detected in the passport photo. Please choose a clearer image."
-                    self.step  = .selectPassport
-                }
-                return
-            }
-
-            let selfieVec: [Float]
-            do {
-                selfieVec = try svc.embedding(from: selfieData)
-            } catch {
-                await MainActor.run {
-                    self.error = "No face detected in the selfie image. Please retake your selfie."
-                    self.step  = .selectPassport
-                }
-                return
-            }
-
-            // --- 3. Similarity & decision -------------------------------------
-            let cosine  = svc.cosine(passportVec, selfieVec)
-            print("🧠 Cosine similarity:", cosine)
-
-            let output = IdentityMatchOutput(
-                passportPhotoHash: pHash,
-                selfiePhotoHash:   sHash,
-                modelId:           modelId,
-                score:             cosine
-            )
-
-            // --- 4. UI update --------------------------------------------------
-            await MainActor.run {
-                if output.score >= similarityThreshold {
-                    if let json = try? JSONEncoder().encode(output) {
-                        self.resultData = json
-                        self.step       = .done
-                        onComplete(json)
-                    } else {
-                        self.error = "Failed to encode result"
-                        self.step  = .selectPassport
+                    switch type {
+                    case .passport:
+                        self.passportMetadata = FaceMetadata.init(embedding: faceEmbedding, photoHash: photoHash)
+                        self.passportValidated = true
+                        self.step = .captureSelfie
+                    case .selfie:
+                        self.selfieMetadata = FaceMetadata.init(embedding: faceEmbedding, photoHash: photoHash)
+                        self.selfieValidated = true
+                        self.compareFaces()
                     }
-                } else {
-                    self.error = "Sorry, the two faces don’t appear to match. Please try again."
-                    self.step  = .selectPassport
+                    self.isProcessing = false
+                }
+            } catch {
+                await MainActor.run {
+                    switch type {
+                    case .passport:
+                        self.error = "No face detected in passport photo. Please try again."
+                        self.passportValidated = false
+                    case .selfie:
+                        self.error = "No face detected in selfie. Please try again."
+                        self.selfieValidated = false
+                    }
+                    self.isProcessing = false
                 }
             }
         }
+    }
+
+    private func compareFaces() {
+        guard let passportMetadata = passportMetadata,
+              let selfieMetadata = selfieMetadata,
+              let onComplete = onComplete else {
+            error = "Missing face embeddings"
+            return
+        }
+        
+        step = .comparing
+        
+        Task {
+            // Placeholder face comparison - compute cosine similarity
+            let score = svc.cosine(passportMetadata.embedding, selfieMetadata.embedding)
+            let threshold: Float = 0.7
+            let match = score >= threshold
+            
+            let output = IdentityMatchOutput(
+                passportPhotoHash: passportMetadata.photoHash,
+                selfiePhotoHash: selfieMetadata.photoHash,
+                modelId: modelId,
+                score: score,
+            )
+            
+            await MainActor.run {
+                if match {
+                    if let json = try? JSONEncoder().encode(output) {
+                        self.resultData = json
+                        self.step = .done
+                        onComplete(json)
+                    } else {
+                        self.error = "Failed to encode result"
+                        self.step = .selectPassport
+                    }
+                } else {
+                    self.error = "Sorry, we could not quite match the photo to yourself. Please try again."
+                    self.step = .selectPassport
+                }
+            }
+        }
+    }
+
+    func setCompletionHandler(_ completion: @escaping (Data) -> Void) {
+        self.onComplete = completion
     }
 
     func resetForRetry() {
         step = .selectPassport
         error = nil
         resultData = nil
+        isProcessing = false
+        passportValidated = false
+        selfieValidated = false
+        passportMetadata = nil
+        selfieMetadata = nil
     }
+}
+
+enum ImageType {
+    case passport
+    case selfie
+}
+
+enum FaceDetectionError: Error {
+    case invalidImage
+    case noFaceDetected
 }

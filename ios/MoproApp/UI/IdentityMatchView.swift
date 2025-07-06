@@ -22,19 +22,28 @@ struct IdentityMatchView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     
-                    PhotosPicker(selection: $passportItem, matching: .images) {
-                        Label("Choose Passport Photo", systemImage: "photo")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                    if vm.isProcessing {
+                        ProgressView("Processing passport photo...")
+                    } else {
+                        PhotosPicker(selection: $passportItem, matching: .images) {
+                            Label(vm.passportValidated ? "Passport Validated ✓" : "Choose Passport Photo", systemImage: "photo")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(vm.passportValidated ? Color.green : Color.blue)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .disabled(vm.passportValidated)
                     }
                 }
                 .onChange(of: passportItem) { _, newValue in
-                    if newValue != nil {
+                    if let newValue = newValue {
                         vm.error = nil // Clear any previous errors
-                        vm.step = .captureSelfie
+                        Task {
+                            if let data = try? await newValue.loadTransferable(type: Data.self) {
+                                vm.processImage(data, for: .passport)
+                            }
+                        }
                     }
                 }
 
@@ -48,26 +57,25 @@ struct IdentityMatchView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                     
-                    Button {
-                        showingCamera = true
-                    } label: {
-                        Label("Take Selfie", systemImage: "camera")
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(8)
+                    if vm.isProcessing {
+                        ProgressView("Processing selfie...")
+                    } else {
+                        Button {
+                            showingCamera = true
+                        } label: {
+                            Label(vm.selfieValidated ? "Selfie Validated ✓" : "Take Selfie", systemImage: "camera")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(vm.selfieValidated ? Color.green : Color.green)
+                                .foregroundColor(.white)
+                                .cornerRadius(8)
+                        }
+                        .disabled(vm.selfieValidated)
                     }
                 }
                 .onChange(of: selfieData) { _, newValue in
-                    if newValue != nil {
-                        Task {
-                            let passportData = try? await passportItem?.loadTransferable(type: Data.self)
-                            
-                            vm.processImages(passportData: passportData,
-                                                   selfieData:   selfieData,
-                                                   onComplete:   onComplete)
-                        }
+                    if let newValue = newValue {
+                        vm.processImage(newValue, for: .selfie)
                     }
                 }
 
@@ -113,6 +121,9 @@ struct IdentityMatchView: View {
         .sheet(isPresented: $showingCamera) {
             CameraView(imageData: $selfieData)
         }
+        .onAppear {
+            vm.setCompletionHandler(onComplete)
+        }
     }
 }
 
@@ -155,3 +166,4 @@ struct CameraView: UIViewControllerRepresentable {
         }
     }
 }
+ 

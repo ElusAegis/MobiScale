@@ -19,7 +19,8 @@ struct ContentView: View {
                     flow.phase = .attestation
                 }
             case .attestation:
-                AttestationView { att, proof in
+                AttestationView(flow: flow) { att, proof in
+                    flow.attestation = (att, proof)
                     flow.appendLog("Attestation proof ready")
                     flow.phase = .assertion
                 }

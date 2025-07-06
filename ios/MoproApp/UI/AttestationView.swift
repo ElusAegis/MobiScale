@@ -1,12 +1,14 @@
 import SwiftUI
 
 struct AttestationView: View {
+    @ObservedObject var flow: AppFlowViewModel
     @StateObject private var vm = AttestationViewModel()
 
     // Expose completion to parent (via initializer)
     var onDone: (AttestationResult, AttestationExtProof) -> Void
 
-    init(onDone: @escaping (AttestationResult, AttestationExtProof) -> Void) {
+    init(flow: AppFlowViewModel, onDone: @escaping (AttestationResult, AttestationExtProof) -> Void) {
+        self.flow = flow
         self.onDone = onDone
     }
 
@@ -49,12 +51,14 @@ struct AttestationView: View {
 
             // Action button
             Button {
-                vm.run()
+                if let challenge = flow.challenge?.bytes {
+                    vm.run(challenge: challenge)
+                }
             } label: {
                 Label("Generate Attestation Proof", systemImage: "shield.checkerboard")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(vm.step != .idle)
+            .disabled(vm.step != .idle || flow.challenge?.bytes == nil)
         }
         .padding()
         .onAppear { vm.onCompletion = onDone }

@@ -17,13 +17,13 @@ import CryptoKit
 public actor ProverService {
 
 
-    /// Path of "ecdsa.json" bundled with the app. Fatal if missing.
-    private let circuitPath: String = {
+    /// Path of "ecdsa.json" bundled with the app. Returns nil if missing.
+    private var circuitPath: String? {
         guard let url = Bundle.main.url(forResource: "ecdsa", withExtension: "json") else {
-            fatalError("ecdsa.json not found in app bundle")
+            return nil
         }
         return url.path
-    }()
+    }
 
     /// Generate a full proof pipeline for the given assertion result.
     ///
@@ -51,6 +51,9 @@ public actor ProverService {
         let noirInputs = byteBuffer.map { String($0) }
 
         // 3️⃣ — Noir signature proof ----------------------------------------------------
+        guard let circuitPath = circuitPath else {
+            throw ProverError.circuitNotFound("ecdsa.json not found in app bundle")
+        }
         let noirProof = try generateNoirProof(
             circuitPath: circuitPath,
             srsPath: nil,
@@ -70,4 +73,8 @@ public actor ProverService {
 
         return AttestationExtProof(risc0Receipt: proofOut.receipt)
     }
+}
+
+public enum ProverError: Error {
+    case circuitNotFound(String)
 }

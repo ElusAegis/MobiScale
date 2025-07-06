@@ -36,7 +36,13 @@ final class AssertionViewModel: ObservableObject {
             await self.flow.runAssertion()
             await MainActor.run {
                 self.stopTimer()
+                if let assertion = self.flow.assertion {
                 self.step = .finished
+                    self.onCompletion?(assertion.0, assertion.1)
+                } else {
+                    self.warning = "Assertion failed. Please try again."
+                    self.step = .idle
+                }
             }
         }
     }

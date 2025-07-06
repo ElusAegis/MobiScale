@@ -36,15 +36,6 @@ final class AppFlowViewModel: ObservableObject {
         phase = .attestation
     }
 
-    func runAttestation() async {
-        guard let challenge = challenge?.bytes else { return }
-        let (att, proof, usedDummy) = await service.generateAttestation(challenge: challenge)
-
-        if usedDummy { showWarning("⚠️ Dummy attestation used") }
-        attestation = (att, proof)
-        appendLog("Attestation done – proof \(proof.risc0Receipt.count) bytes")
-    }
-
     func runAssertion() async {
         guard let _ = attestation else { return }   // sanity check
         guard let payload = mlOutput else { return }

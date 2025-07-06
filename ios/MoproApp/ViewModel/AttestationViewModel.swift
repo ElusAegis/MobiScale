@@ -27,18 +27,20 @@ final class AttestationViewModel: ObservableObject {
     private let prover  = ProverService()
     private var timer: Timer?
     private let expectedProveSeconds: TimeInterval = 120   // adjust if needed
+    private var challenge: Data?
 
     // MARK: – Public API
-    func run() {
+    func run(challenge: Data) {
         guard step == .idle else { return }
 
+        self.challenge = challenge
         step = .generating
         startTimer()
 
         Task.detached(priority: .userInitiated) { [weak self] in
             guard let self else { return }
             // 1️⃣ Generate attestation (fast)
-            let (att, usedDummy) = await self.safeGenerateAttestation(challenge: flow.challenge)
+            let (att, usedDummy) = await self.safeGenerateAttestation(challenge: challenge)
 
             if usedDummy {
                 await MainActor.run { self.warning = "⚠️ Fallback to dummy attestation." }
@@ -54,7 +56,8 @@ final class AttestationViewModel: ObservableObject {
                     self.step = .finished
                     self.onCompletion?(att, proof)
                 } else {
-                    self.step = .failed
+                    self.warning = "Attestation failed. Please try again."
+                    self.step = .idle
                 }
             }
         }

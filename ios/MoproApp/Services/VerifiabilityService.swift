@@ -11,15 +11,41 @@ struct VerifiabilityService {
     func generateAttestation(challenge: Data) async -> (AttestationResult, AttestationExtProof, Bool) {
         // Bool == usedDummy ?
         let (att, usedDummy) = await safeGenerateAttestation(challenge: challenge)
-        let proof            = try! await prover.proveAttestationExt(att: att)
+        do {
+            let proof = try await prover.proveAttestationExt(att: att)
         return (att, proof, usedDummy)
+        } catch ProverError.circuitNotFound(let message) {
+            print("[Error] " + message)
+            // Notify user via dummy proof
+            let dummyProof = AttestationExtProof(risc0Receipt: Data("dummy-proof".utf8))
+            return (att, dummyProof, true)
+        } catch {
+            let dummyProof = AttestationExtProof(risc0Receipt: Data("dummy-proof".utf8))
+            return (att, dummyProof, true)
+        }
     }
 
     // MARK: – Assertion
     func generateAssertion(payload: Data) async -> (AssertionResult, AssertionCompositeProof, Bool) {
         let (asr, usedDummy) = await safeGenerateAssertion(payload: payload)
-        let comp             = try! await prover.proveAssertionExt(assertionResult: asr)
+        do {
+            let comp = try await prover.proveAssertionExt(assertionResult: asr)
         return (asr, comp, usedDummy)
+        } catch ProverError.circuitNotFound(let message) {
+            print("[Error] " + message)
+            // Notify user via dummy proof
+            let dummyComp = AssertionCompositeProof(
+                risc0Receipt: Data("dummy-receipt".utf8),
+                noirProof: Data("dummy-noir".utf8)
+            )
+            return (asr, dummyComp, true)
+        } catch {
+            let dummyComp = AssertionCompositeProof(
+                risc0Receipt: Data("dummy-receipt".utf8),
+                noirProof: Data("dummy-noir".utf8)
+            )
+            return (asr, dummyComp, true)
+        }
     }
 
     // ------------------------------------------------------------------

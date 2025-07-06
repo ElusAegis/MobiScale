@@ -73,7 +73,7 @@ struct AssertionView: View {
                 Label("Generate Assertion Proof", systemImage: "doc.plaintext")
             }
             .buttonStyle(.borderedProminent)
-            .disabled(vm.step != .idle || flow.mlOutput == nil)
+            .disabled(vm.step != .idle || flow.mlOutput == nil || flow.attestation == nil)
         }
         .padding()
         .onAppear { vm.onCompletion = onDone }

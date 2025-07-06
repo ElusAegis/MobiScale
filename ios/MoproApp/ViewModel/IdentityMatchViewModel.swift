@@ -12,49 +12,73 @@ final class IdentityMatchViewModel: ObservableObject {
     @Published var error: String?
 
     private let modelId = "passport-selfie-v0.1"
-    private let similarityThreshold: Float = 0.40   // lower = stricter match
+    private let similarityThreshold: Float = 0.70   // ArcFace w600k_r50 recommended
 
     func processImages(passportData: Data?, selfieData: Data?, onComplete: @escaping (Data) -> Void) {
         step = .comparing
         Task {
-            // Load image bytes
+            // --- 0. Byte check -------------------------------------------------
             guard let passportData = passportData, let selfieData = selfieData else {
                 await MainActor.run {
                     self.error = "Unable to read images"
-                    self.step = .selectPassport
+                    self.step  = .selectPassport
                 }
                 return
             }
-            // Persist the raw SHA‑256 hashes for audit purposes
+
+            // --- 1. Audit SHA‑256 fingerprints --------------------------------
             let pHash = Data(SHA256.hash(data: passportData))
             let sHash = Data(SHA256.hash(data: selfieData))
 
-            // -------- Face‑to‑face similarity --------
-            let isMatch = try FaceEmbeddingService().evaluateMatch(passport: passportData, selfie: selfieData)
-            
+            // --- 2. Face embeddings  ------------------------------------------
+            var svc = FaceEmbeddingService()
+            let passportVec: [Float]
+            do {
+                passportVec = try svc.embedding(from: passportData)
+            } catch {
+                await MainActor.run {
+                    self.error = "No face detected in the passport photo. Please choose a clearer image."
+                    self.step  = .selectPassport
+                }
+                return
+            }
+
+            let selfieVec: [Float]
+            do {
+                selfieVec = try svc.embedding(from: selfieData)
+            } catch {
+                await MainActor.run {
+                    self.error = "No face detected in the selfie image. Please retake your selfie."
+                    self.step  = .selectPassport
+                }
+                return
+            }
+
+            // --- 3. Similarity & decision -------------------------------------
+            let cosine  = svc.cosine(passportVec, selfieVec)
+            print("🧠 Cosine similarity:", cosine)
+
             let output = IdentityMatchOutput(
                 passportPhotoHash: pHash,
                 selfiePhotoHash:   sHash,
                 modelId:           modelId,
-                isMatch:           isMatch
+                score:             cosine
             )
-            
+
+            // --- 4. UI update --------------------------------------------------
             await MainActor.run {
-                
-                if output.isMatch {
-                    // Match successful - proceed with attestation
+                if output.score >= similarityThreshold {
                     if let json = try? JSONEncoder().encode(output) {
                         self.resultData = json
-                        self.step = .done
+                        self.step       = .done
                         onComplete(json)
                     } else {
                         self.error = "Failed to encode result"
-                        self.step = .selectPassport
+                        self.step  = .selectPassport
                     }
                 } else {
-                    // Match failed - reset to start
-                    self.error = "Sorry, we could not quite match the photo to yourself. Please try again."
-                    self.step = .selectPassport
+                    self.error = "Sorry, the two faces don’t appear to match. Please try again."
+                    self.step  = .selectPassport
                 }
             }
         }
@@ -65,4 +89,4 @@ final class IdentityMatchViewModel: ObservableObject {
         error = nil
         resultData = nil
     }
-} 
+}

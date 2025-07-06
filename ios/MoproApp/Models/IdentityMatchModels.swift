@@ -6,5 +6,5 @@ public struct IdentityMatchOutput: Codable, Sendable {
     public let passportPhotoHash: Data   // SHA-256 of the selected passport image
     public let selfiePhotoHash:   Data   // SHA-256 of the selfie / screenshot
     public let modelId:           String // e.g. "passport-selfie-v0.1"
-    public let isMatch:           Bool   // ML decision ‑ same person?
+    public let score:             Float    // ML score ‑ same person cofidence
 }

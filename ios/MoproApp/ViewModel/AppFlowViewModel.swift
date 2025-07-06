@@ -6,12 +6,12 @@ final class AppFlowViewModel: ObservableObject {
     enum Phase { case introduction, photoSelection, identityMatchSuccess, randomness, attestation, assertion, done }
 
     // MARK: – Public state
-    @Published var phase: Phase = .assertion
+    @Published var phase: Phase = .introduction
     @Published var log: String  = "Ready"
     @Published var warning: String?
 
     // Final artefacts 
-    var mlOutput: Data? = Data(base64Encoded: "eyJpZCI6IjEiLCJ0eXBlIjoiY29kZSIsImNvZGUiOiJjb2RlIn0=") // TODO - remove this
+    var mlOutput: Data?
     var identityMatchOutput: IdentityMatchOutput?
     var challenge: RandomnessChallenge?
     var attestation:   (AttestationResult, AttestationExtProof)?

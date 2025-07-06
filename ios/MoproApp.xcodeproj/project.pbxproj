@@ -11,7 +11,7 @@
 		60BBD7732E19C90700196FF4 /* MoproBindings.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */; };
 		60BBD7742E19C90700196FF4 /* MoproBindings.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		60BBD7762E19C90F00196FF4 /* mopro.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60BBD7702E19C8FB00196FF4 /* mopro.swift */; };
-		60BBD7A32E1A238B00196FF4 /* BuffaloL.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 60BBD7A22E1A238B00196FF4 /* BuffaloL.mlmodel */; };
+		60BBD7A72E1A260300196FF4 /* BuffaloL.mlmodel in Sources */ = {isa = PBXBuildFile; fileRef = 60BBD7A62E1A260300196FF4 /* BuffaloL.mlmodel */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -33,7 +33,7 @@
 		60BBD73F2E19A0C100196FF4 /* ecdsa.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = ecdsa.json; path = ../ecdsa/target/ecdsa.json; sourceTree = SOURCE_ROOT; };
 		60BBD7702E19C8FB00196FF4 /* mopro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = mopro.swift; sourceTree = "<group>"; };
 		60BBD7712E19C8FB00196FF4 /* MoproBindings.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = MoproBindings.xcframework; sourceTree = "<group>"; };
-		60BBD7A22E1A238B00196FF4 /* BuffaloL.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; path = BuffaloL.mlmodel; sourceTree = "<group>"; };
+		60BBD7A62E1A260300196FF4 /* BuffaloL.mlmodel */ = {isa = PBXFileReference; lastKnownFileType = file.mlmodel; name = BuffaloL.mlmodel; path = ../mlconvert/BuffaloL.mlmodel; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -63,7 +63,7 @@
 				2A5991ED2CC7722900135402 /* Products */,
 				60BBD73F2E19A0C100196FF4 /* ecdsa.json */,
 				60BBD76F2E19C8FB00196FF4 /* Frameworks */,
-				60BBD7A22E1A238B00196FF4 /* BuffaloL.mlmodel */,
+				60BBD7A62E1A260300196FF4 /* BuffaloL.mlmodel */,
 			);
 			sourceTree = "<group>";
 		};
@@ -169,7 +169,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				60BBD7762E19C90F00196FF4 /* mopro.swift in Sources */,
-				60BBD7A32E1A238B00196FF4 /* BuffaloL.mlmodel in Sources */,
+				60BBD7A72E1A260300196FF4 /* BuffaloL.mlmodel in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

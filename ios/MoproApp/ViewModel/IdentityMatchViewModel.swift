@@ -5,7 +5,7 @@ import UIKit
 
 @MainActor
 final class IdentityMatchViewModel: ObservableObject {
-    enum Step { case selectPassport, captureSelfie, comparing, done }
+    enum Step { case selectPassport, captureSelfie, comparing, success, done }
 
     
     @Published var step: Step = .selectPassport
@@ -14,6 +14,7 @@ final class IdentityMatchViewModel: ObservableObject {
     @Published var isProcessing = false
     @Published var passportValidated = false
     @Published var selfieValidated = false
+    @Published var output: IdentityMatchOutput?
     private var svc = FaceEmbeddingService()
 
 
@@ -86,16 +87,17 @@ final class IdentityMatchViewModel: ObservableObject {
             
             await MainActor.run {
                 if match {
+                    self.output = output
                     if let json = try? JSONEncoder().encode(output) {
                         self.resultData = json
-                        self.step = .done
-                        onComplete(json)
+                        self.step = .success
                     } else {
                         self.error = "Failed to encode result"
                         self.step = .selectPassport
                     }
                 } else {
                     self.error = "Sorry, we could not quite match the photo to yourself. Please try again."
+                    print("")
                     self.step = .selectPassport
                 }
             }
@@ -105,11 +107,19 @@ final class IdentityMatchViewModel: ObservableObject {
     func setCompletionHandler(_ completion: @escaping (Data) -> Void) {
         self.onComplete = completion
     }
+    
+    func proceedToAttestation() {
+        guard let onComplete = onComplete,
+              let resultData = resultData else { return }
+        step = .done
+        onComplete(resultData)
+    }
 
     func resetForRetry() {
         step = .selectPassport
         error = nil
         resultData = nil
+        output = nil
         isProcessing = false
         passportValidated = false
         selfieValidated = false

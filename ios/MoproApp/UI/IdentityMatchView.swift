@@ -81,6 +81,11 @@ struct IdentityMatchView: View {
 
             case .comparing:
                 ProgressView("Running model…")
+            case .success:
+                IdentityMatchSuccessView(
+                    output: vm.output,
+                    onContinue: vm.proceedToAttestation
+                )
             case .done:
                 VStack(spacing: 8) {
                     Text("✅ Photos processed")
